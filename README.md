@@ -1,26 +1,16 @@
-# AI Resume Matcher Agent
-
-## Project Description
-This project is an AI-powered recruiter agent that matches job descriptions with candidate resumes.
-
 ## Features
-- Resume parsing
-- Job description analysis
-- Candidate ranking
-- Personalized recruiter pitch
-- Interview question generation
 
-## Tech Stack
-- Python
-- Streamlit
-- LLM API
-- FAISS / ChromaDB
+- Upload multiple resume PDFs
+- Paste a job description
+- Extract text from resume PDFs
+- Analyze candidate-job fit using Gemini API
+- Fallback to local recruiter agent when API quota is unavailable
+- Rank candidates by match score
+- Generate candidate summary, strengths, missing skills, interview questions, and recruiter pitch
 
 ## How to Run
-1. Clone the repository
-2. Install dependencies
-3. Add API key
-4. Run the app
 
-## Demo
-Upload a job description and resumes, then click Analyze.
+1. Install dependencies
+
+```bash
+py -m pip install -r requirements.txt
