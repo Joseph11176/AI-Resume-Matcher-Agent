@@ -4,12 +4,14 @@ import re
 import streamlit as st
 from dotenv import load_dotenv
 from PyPDF2 import PdfReader
-from google import genai
-from google.genai.errors import ClientError
+from openai import OpenAI
 
 load_dotenv()
 
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+client = OpenAI(
+    api_key=os.getenv("CHUTES_API_KEY"),
+    base_url="https://llm.chutes.ai/v1"
+)
 
 st.set_page_config(page_title="AI Resume Matcher Agent", layout="wide")
 
@@ -43,12 +45,25 @@ def basic_keyword_score(job_description, resume):
 
     return min(score, 100)
 
+
+def extract_json_from_text(text):
+    text = text.strip()
+
+    if text.startswith("```json"):
+        text = text.replace("```json", "").replace("```", "").strip()
+    elif text.startswith("```"):
+        text = text.replace("```", "").strip()
+
+    return json.loads(text)
+
+
 def fallback_agent_analysis(job_description, resume_text, candidate_name):
     score = basic_keyword_score(job_description, resume_text)
 
     resume_lower = resume_text.lower()
 
     strengths = []
+
     if "python" in resume_lower:
         strengths.append("Has Python programming knowledge relevant to technical roles.")
     if "linux" in resume_lower or "kali" in resume_lower:
@@ -75,7 +90,7 @@ def fallback_agent_analysis(job_description, resume_text, candidate_name):
     return {
         "candidate_name": candidate_name,
         "match_score": score,
-        "summary": "This candidate was analyzed using the fallback recruiter agent because the LLM API quota was unavailable.",
+        "summary": "This candidate was analyzed using the fallback recruiter agent because the LLM API was unavailable.",
         "strengths": strengths[:5],
         "missing_skills": missing_skills,
         "why_this_person": f"{candidate_name} is recommended based on resume-to-job matching logic and keyword overlap with the job description.",
@@ -87,18 +102,8 @@ def fallback_agent_analysis(job_description, resume_text, candidate_name):
         "recruiter_pitch": f"{candidate_name} appears to be a potential fit based on extracted resume content and matching logic. The recruiter should review this candidate further during screening."
     }
 
-def extract_json_from_text(text):
-    text = text.strip()
 
-    if text.startswith("```json"):
-        text = text.replace("```json", "").replace("```", "").strip()
-    elif text.startswith("```"):
-        text = text.replace("```", "").strip()
-
-    return json.loads(text)
-
-
-def analyze_candidate_with_gemini(job_description, resume_text, candidate_name):
+def analyze_candidate_with_chutes(job_description, resume_text, candidate_name):
     prompt = f"""
 You are an AI Recruiter Agent.
 
@@ -138,28 +143,29 @@ Rules:
 """
 
     try:
-        response = client.models.generate_content(
-            model="gemini-2.0-flash",
-            contents=prompt
+        response = client.chat.completions.create(
+            model="deepseek-ai/DeepSeek-V3.2-TEE",
+            messages=[
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.2
         )
 
-        result_text = response.text
-
-    except ClientError as e:
-        st.warning("Gemini quota is unavailable, so the app is using fallback demo agent analysis.")
-        return fallback_agent_analysis(job_description, resume_text, candidate_name)
+        result_text = response.choices[0].message.content
 
     except Exception as e:
-        st.warning("Gemini request failed, so the app is using fallback demo agent analysis.")
+        st.warning("Chutes API request failed, so the app is using fallback demo agent analysis.")
         return fallback_agent_analysis(job_description, resume_text, candidate_name)
 
     try:
         return extract_json_from_text(result_text)
     except Exception:
+        st.warning("The LLM response could not be parsed as JSON, so the app is using fallback demo agent analysis.")
         return fallback_agent_analysis(job_description, resume_text, candidate_name)
 
+
 st.title("AI Resume Matcher Agent")
-st.write("A Gemini-powered recruiter agent that ranks candidates based on a job description and uploaded resumes.")
+st.write("A Chutes-powered recruiter agent that ranks candidates based on a job description and uploaded resumes.")
 
 st.header("1. Job Description")
 job_description = st.text_area("Paste the job description here", height=220)
@@ -171,21 +177,21 @@ uploaded_resumes = st.file_uploader(
     accept_multiple_files=True
 )
 
-analyze_button = st.button("Analyze Candidates with Gemini Agent")
+analyze_button = st.button("Analyze Candidates with Chutes Agent")
 
 if analyze_button:
-    if not os.getenv("GEMINI_API_KEY"):
-        st.error("GEMINI_API_KEY is missing. Please add it inside your .env file.")
+    if not os.getenv("CHUTES_API_KEY"):
+        st.error("CHUTES_API_KEY is missing. Please add it inside your .env file.")
     elif not job_description.strip():
         st.warning("Please enter a job description.")
     elif not uploaded_resumes:
         st.warning("Please upload at least one resume PDF.")
     else:
-        st.subheader("Gemini Agent Analysis Result")
+        st.subheader("Chutes Agent Analysis Result")
 
         results = []
 
-        with st.spinner("Gemini Recruiter Agent is analyzing candidates..."):
+        with st.spinner("Chutes Recruiter Agent is analyzing candidates..."):
             for uploaded_file in uploaded_resumes:
                 resume_text = extract_text_from_pdf(uploaded_file)
 
@@ -193,7 +199,7 @@ if analyze_button:
                     st.warning(f"Could not extract text from {uploaded_file.name}.")
                     continue
 
-                analysis = analyze_candidate_with_gemini(
+                analysis = analyze_candidate_with_chutes(
                     job_description=job_description,
                     resume_text=resume_text,
                     candidate_name=uploaded_file.name
@@ -215,20 +221,32 @@ if analyze_button:
 
             with col1:
                 st.markdown("### Strengths")
-                for item in result.get("strengths", []):
-                    st.write(f"- {item}")
+                strengths = result.get("strengths", [])
+                if strengths:
+                    for item in strengths:
+                        st.write(f"- {item}")
+                else:
+                    st.write("No strengths listed.")
 
             with col2:
                 st.markdown("### Missing Skills / Gaps")
-                for item in result.get("missing_skills", []):
-                    st.write(f"- {item}")
+                gaps = result.get("missing_skills", [])
+                if gaps:
+                    for item in gaps:
+                        st.write(f"- {item}")
+                else:
+                    st.write("No missing skills listed.")
 
             st.markdown("### Why This Person?")
             st.write(result.get("why_this_person", ""))
 
             st.markdown("### Suggested Interview Questions")
-            for i, question in enumerate(result.get("interview_questions", []), start=1):
-                st.write(f"{i}. {question}")
+            questions = result.get("interview_questions", [])
+            if questions:
+                for i, question in enumerate(questions, start=1):
+                    st.write(f"{i}. {question}")
+            else:
+                st.write("No interview questions generated.")
 
             st.markdown("### Recruiter Pitch")
             st.info(result.get("recruiter_pitch", ""))
