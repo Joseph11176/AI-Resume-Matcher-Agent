@@ -23,21 +23,23 @@ This project solves the problem by using an AI recruiter agent that can:
 - Upload multiple resume PDF files
 - Paste a job description
 - Extract text from PDF resumes
-- Analyze candidate suitability using Gemini API
+- Analyze candidate suitability using Chutes API
+- Use DeepSeek V3.2 TEE for LLM-based recruiter reasoning
 - Rank candidates by match score
 - Generate candidate summary
 - Identify candidate strengths
 - Identify missing skills or gaps
 - Generate suggested interview questions
 - Generate recruiter pitch
-- Fallback to local rule-based recruiter agent when API quota is unavailable
+- Fallback to a local rule-based recruiter agent when the API is slow or unavailable
 
 ## Tech Stack
 
 - Python
 - Streamlit
-- Gemini API
-- Google GenAI SDK
+- Chutes API
+- DeepSeek V3.2 TEE
+- OpenAI-compatible API client
 - PyPDF2
 - python-dotenv
 
@@ -54,6 +56,13 @@ PDF Text Extraction
 │
 ▼
 Recruiter Agent
+│
+├── Chutes API
+├── DeepSeek V3.2 TEE
+└── Fallback Rule-Based Agent
+│
+▼
+Agent Reasoning Steps
 │
 ├── Job Requirement Analysis
 ├── Candidate Profile Analysis
