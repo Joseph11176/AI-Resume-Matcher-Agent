@@ -1,0 +1,34 @@
+Cybersecurity Intern - Job Description
+
+Company: SecureTech Solutions Sdn Bhd
+Location: Kuala Lumpur, Malaysia
+Internship Duration: 4 months
+
+About the Role
+We are looking for a Cybersecurity Intern to support our security testing and vulnerability assessment activities. The intern will work with the security team to identify web application vulnerabilities, document findings, and assist with basic security monitoring tasks.
+
+Key Responsibilities
+- Perform basic web application security testing using tools such as Burp Suite, OWASP ZAP, and browser developer tools.
+- Assist in penetration testing activities under supervision.
+- Conduct vulnerability assessment and document security issues clearly.
+- Use Kali Linux and common security tools for testing and learning.
+- Review basic SQL injection, authentication, access control, and input validation issues.
+- Prepare security reports with risk level, evidence, impact, and recommended fixes.
+- Communicate findings clearly to developers and team members.
+
+Required Skills
+- Basic knowledge of cybersecurity concepts and web security.
+- Familiarity with Linux, networking basics, HTTP requests, and web applications.
+- Basic Python scripting skill.
+- Understanding of OWASP Top 10 vulnerabilities.
+- Good report writing and communication skills.
+
+Preferred Skills
+- Experience with Burp Suite, Kali Linux, OWASP ZAP, Nmap, or Wireshark.
+- Knowledge of SQL injection, XSS, authentication flaws, and access control testing.
+- Interest in mobile application security or API security.
+
+Candidate Qualities
+- Willing to learn, responsible, and detail-oriented.
+- Able to work independently and ask questions when needed.
+- Able to explain technical issues in simple language.
